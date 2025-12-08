@@ -15,6 +15,6 @@ timeout /t 3 /nobreak >nul
 start http://localhost:3000
 
 echo.
-echo Mobile Access: http://100.108.102.8:3000
+echo Mobile Access: http://100.82.247.90:3000
 echo.
 echo Done! Keep the other two windows open.
