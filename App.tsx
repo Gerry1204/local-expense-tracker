@@ -6,7 +6,7 @@ import {
 import { 
   Plus, Trash2, ArrowUpCircle, ArrowDownCircle, 
   LayoutDashboard, List, Wallet, Calculator,
-  ChevronLeft, ChevronRight, Moon, Sun, Download
+  ChevronLeft, ChevronRight, Moon, Sun, Download, Calendar
 } from 'lucide-react';
 import { Transaction, TransactionCreate, TransactionType, DashboardStats } from './types';
 
@@ -56,7 +56,18 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   
-  // Form State
+  // Date Filter State
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1); // Default to first day of month
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+
+  // Derived Data (Filtered)
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => t.date >= startDate && t.date <= endDate);
+  }, [transactions, startDate, endDate]);
   const [amountInput, setAmountInput] = useState('');
   const [category, setCategory] = useState('Food');
   const [type, setType] = useState<TransactionType>('expense');
@@ -101,7 +112,7 @@ export default function App() {
   // Stats Calculation
   const stats: DashboardStats = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    return transactions.reduce((acc, t) => {
+    return filteredTransactions.reduce((acc, t) => {
       if (t.type === 'income') acc.totalIncome += t.amount;
       else {
         acc.totalExpense += t.amount;
@@ -110,27 +121,26 @@ export default function App() {
       acc.balance = acc.totalIncome - acc.totalExpense;
       return acc;
     }, { totalIncome: 0, totalExpense: 0, balance: 0, todayExpense: 0 });
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   // Chart Data Preparation
   const categoryData = useMemo(() => {
     const data: Record<string, number> = {};
-    transactions.filter(t => t.type === 'expense').forEach(t => {
+    filteredTransactions.filter(t => t.type === 'expense').forEach(t => {
       data[t.category] = (data[t.category] || 0) + t.amount;
     });
     return Object.entries(data).map(([name, value]) => ({ name, value }));
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const weeklyData = useMemo(() => {
-    // Simplified logic for "last 7 days" or grouping by date
     const data: Record<string, { date: string; income: number; expense: number }> = {};
-    transactions.forEach(t => {
+    filteredTransactions.forEach(t => {
        if (!data[t.date]) data[t.date] = { date: t.date, income: 0, expense: 0 };
        if (t.type === 'income') data[t.date].income += t.amount;
        else data[t.date].expense += t.amount;
     });
-    return Object.values(data).sort((a, b) => a.date.localeCompare(b.date)).slice(-7);
-  }, [transactions]);
+    return Object.values(data).sort((a, b) => a.date.localeCompare(b.date));
+  }, [filteredTransactions]);
 
 
   // Handlers
@@ -208,6 +218,29 @@ export default function App() {
 
   const DashboardView = () => (
     <div className="space-y-6 pb-20">
+      {/* Date Filter */}
+      <Card className="flex flex-col md:flex-row gap-4 items-center justify-between p-3">
+          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+              <Calendar size={20} />
+              <span className="font-medium">Date Range</span>
+          </div>
+          <div className="flex gap-2 w-full md:w-auto">
+              <input 
+                  type="date" 
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="p-2 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 dark:text-white text-sm w-full md:w-auto outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="self-center text-gray-400">-</span>
+              <input 
+                  type="date" 
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="p-2 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 dark:text-white text-sm w-full md:w-auto outline-none focus:ring-2 focus:ring-blue-500"
+              />
+          </div>
+      </Card>
+
       {/* Header Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-br from-slate-800 to-slate-900 text-white dark:from-slate-700 dark:to-slate-800">
@@ -300,7 +333,7 @@ export default function App() {
       <div className="md:hidden">
           <h3 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 ml-1">Recent Activity</h3>
           <div className="space-y-3">
-              {transactions.slice(0, 5).map(t => (
+              {filteredTransactions.slice(0, 5).map(t => (
                   <Card key={t.id} className="flex justify-between items-center py-3">
                       <div className="flex gap-3 items-center">
                           <div className={`w-2 h-10 rounded-full ${t.type === 'expense' ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>
