@@ -77,6 +77,8 @@ export default function App() {
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [trendCategory, setTrendCategory] = useState('All');
+  const [recentPage, setRecentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
 
   // Load Theme
   useEffect(() => {
@@ -384,7 +386,7 @@ export default function App() {
       <div className="md:hidden">
           <h3 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 ml-1">Recent Activity</h3>
           <div className="space-y-3">
-              {filteredTransactions.slice(0, 5).map(t => (
+              {filteredTransactions.slice((recentPage - 1) * ITEMS_PER_PAGE, recentPage * ITEMS_PER_PAGE).map(t => (
                   <Card key={t.id} className="flex justify-between items-center py-3">
                       <div className="flex gap-3 items-center">
                           <div className={`w-2 h-10 rounded-full ${t.type === 'expense' ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>
@@ -399,8 +401,32 @@ export default function App() {
                   </Card>
               ))}
           </div>
+          {/* Pagination Controls */}
+          {filteredTransactions.length > ITEMS_PER_PAGE && (
+              <div className="flex justify-between items-center mt-4 px-2">
+                  <Button 
+                      variant="ghost" 
+                      onClick={() => setRecentPage(p => Math.max(1, p - 1))}
+                      disabled={recentPage === 1}
+                      className={recentPage === 1 ? 'opacity-50' : ''}
+                  >
+                      <ChevronLeft size={20} /> Prev
+                  </Button>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                      Page {recentPage} of {Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE)}
+                  </span>
+                  <Button 
+                      variant="ghost" 
+                      onClick={() => setRecentPage(p => Math.min(Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE), p + 1))}
+                      disabled={recentPage === Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE)}
+                      className={recentPage === Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE) ? 'opacity-50' : ''}
+                  >
+                      Next <ChevronRight size={20} />
+                  </Button>
+              </div>
+          )}
+          </div>
       </div>
-    </div>
   );
 
   const transactionsView = (
