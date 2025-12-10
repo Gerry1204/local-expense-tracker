@@ -5,6 +5,7 @@ LocalFlow is a beautiful, modern, and responsive personal expense tracker applic
 ## Features
 
 - **Dashboard**: Visual overview of your finances with Pie Charts and Bar Charts.
+- **Yearly Overview**: View detailed yearly statistics including highest spending day, most frequent transaction day, and top spending category.
 - **Date Range Filtering**: Analyze your spending behaviors for specific time periods.
 - **Transaction Management**: Add, view, and delete income and expense records.
 - **Responsive Design**: Works perfectly on Desktop, Tablet, and Mobile devices.
