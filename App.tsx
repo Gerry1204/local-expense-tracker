@@ -44,8 +44,8 @@ const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant
   );
 };
 
-const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-gray-100 dark:border-slate-700 rounded-2xl shadow-sm p-4 ${className}`}>
+const Card: React.FC<React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }> = ({ children, className = '', ...props }) => (
+  <div className={`bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-gray-100 dark:border-slate-700 rounded-2xl shadow-sm p-4 ${className}`} {...props}>
     {children}
   </div>
 );
@@ -78,6 +78,8 @@ export default function App() {
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [trendCategory, setTrendCategory] = useState('All');
   const [recentPage, setRecentPage] = useState(1);
+  const [deleteTxId, setDeleteTxId] = useState<number | null>(null);
+  const timerRef = React.useRef<any>(null); // Use any to avoid NodeJS.Timeout type issues
   const ITEMS_PER_PAGE = 5;
 
   // Load Theme
@@ -220,13 +222,18 @@ export default function App() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Delete this transaction?")) return;
+  const performDelete = async (id: number) => {
     try {
       const res = await fetch(`${API_URL}/transactions/${id}`, { method: 'DELETE' });
       if (res.ok) await fetchTransactions();
     } catch (err) {
       setTransactions(transactions.filter(t => t.id !== id));
+    }
+  };
+
+  const handleDeleteClick = async (id: number) => {
+    if (confirm("Delete this transaction?")) {
+        await performDelete(id);
     }
   };
 
@@ -241,6 +248,28 @@ export default function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Long Press Handlers
+  const handleTouchStart = (id: number) => {
+      timerRef.current = setTimeout(() => {
+          setDeleteTxId(id);
+          if (navigator.vibrate) navigator.vibrate(50);
+      }, 500); // 500ms long press
+  };
+
+  const handleTouchEnd = () => {
+      if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+      }
+  };
+
+  const confirmMobileDelete = async () => {
+      if (deleteTxId !== null) {
+          await performDelete(deleteTxId);
+          setDeleteTxId(null);
+      }
   };
 
   // --- Views ---
@@ -387,15 +416,26 @@ export default function App() {
           <h3 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 ml-1">Recent Activity</h3>
           <div className="space-y-3">
               {filteredTransactions.slice((recentPage - 1) * ITEMS_PER_PAGE, recentPage * ITEMS_PER_PAGE).map(t => (
-                  <Card key={t.id} className="flex justify-between items-center py-3">
-                      <div className="flex gap-3 items-center">
+                  <Card 
+                    key={t.id} 
+                    className="flex justify-between items-center py-3 active:scale-[0.98] transition-transform select-none"
+                    // @ts-ignore
+                    onTouchStart={() => handleTouchStart(t.id)}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchEnd}
+                    onContextMenu={(e) => e.preventDefault()}
+                    onMouseDown={() => handleTouchStart(t.id)}
+                    onMouseUp={handleTouchEnd}
+                    onMouseLeave={handleTouchEnd}
+                  >
+                      <div className="flex gap-3 items-center pointer-events-none">
                           <div className={`w-2 h-10 rounded-full ${t.type === 'expense' ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>
                           <div>
                               <p className="font-medium text-gray-800 dark:text-gray-100">{t.category}</p>
                               <p className="text-xs text-gray-500">{t.note || t.date}</p>
                           </div>
                       </div>
-                      <span className={`font-bold ${t.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'}`}>
+                      <span className={`font-bold ${t.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'} pointer-events-none`}>
                           {t.type === 'expense' ? '-' : '+'}${t.amount}
                       </span>
                   </Card>
@@ -469,7 +509,7 @@ export default function App() {
                             </td>
                             <td className="p-4 text-center">
                                 <button 
-                                    onClick={() => handleDelete(t.id)}
+                                    onClick={() => performDelete(t.id)}
                                     className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                                 >
                                     <Trash2 size={18} />
@@ -666,7 +706,25 @@ export default function App() {
             </div>
         </div>
       )}
-      
+
+      {/* Delete Confirmation Modal (Mobile) */}
+      {deleteTxId !== null && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-200">
+                <h3 className="font-bold text-lg dark:text-white mb-2">Delete Transaction?</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Are you sure you want to remove this transaction? This action cannot be undone.</p>
+                <div className="flex gap-4">
+                    <Button variant="secondary" onClick={() => setDeleteTxId(null)} className="flex-1">
+                        Cancel
+                    </Button>
+                    <Button variant="danger" onClick={confirmMobileDelete} className="flex-1">
+                        Delete
+                    </Button>
+                </div>
+            </div>
+        </div>
+      )}
+
     </div>
   );
 }
