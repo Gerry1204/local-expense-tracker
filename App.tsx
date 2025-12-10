@@ -6,7 +6,7 @@ import {
 import { 
   Plus, Trash2, ArrowUpCircle, ArrowDownCircle, 
   LayoutDashboard, List, Wallet, Calculator,
-  ChevronLeft, ChevronRight, Moon, Sun, Download, Calendar
+  ChevronLeft, ChevronRight, Moon, Sun, Download, Calendar, X
 } from 'lucide-react';
 import { Transaction, TransactionCreate, TransactionType, DashboardStats } from './types';
 
@@ -23,6 +23,7 @@ const API_URL = ''; // Use relative path for proxy
 const EXPENSE_COLOR = '#e11d48';
 const INCOME_COLOR = '#059669';
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#e11d48', '#8884d8'];
+const INITIAL_CATEGORIES = ['Food', 'Transport', 'Entertainment', 'Salary', 'Bills', 'Housing', 'Education', 'Shopping', 'Health', 'Other'];
 
 // --- Components ---
 
@@ -73,6 +74,8 @@ export default function App() {
   const [type, setType] = useState<TransactionType>('expense');
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
 
   // Load Theme
   useEffect(() => {
@@ -159,6 +162,16 @@ export default function App() {
     if (isNaN(finalAmount) || finalAmount <= 0) {
       alert("Please enter a valid amount");
       return;
+    }
+
+    if (!category.trim()) {
+        alert("Please select or enter a category");
+        return;
+    }
+
+    // Add custom category to list if it's new
+    if (isCustomCategory && !categories.includes(category)) {
+        setCategories(prev => [...prev, category]);
     }
 
     const newTx: TransactionCreate = {
@@ -523,21 +536,51 @@ export default function App() {
                             />
                         </div>
                         <div>
+                        <div>
                             <label className="block text-xs font-semibold uppercase text-gray-500 mb-1">Category</label>
-                            <select 
-                                value={category} 
-                                onChange={(e) => setCategory(e.target.value)}
-                                className="w-full p-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white"
-                            >
-                                <option>Food</option>
-                                <option>Transport</option>
-                                <option>Entertainment</option>
-                                <option>Salary</option>
-                                <option>Bills</option>
-                                <option>Shopping</option>
-                                <option>Health</option>
-                                <option>Other</option>
-                            </select>
+                            {isCustomCategory ? (
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text"
+                                        value={category}
+                                        onChange={(e) => setCategory(e.target.value)}
+                                        placeholder="Enter category name..."
+                                        className="flex-1 p-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                        autoFocus
+                                    />
+                                    <Button 
+                                        type="button"
+                                        variant="secondary"
+                                        className="px-3"
+                                        title="Cancel custom category"
+                                        onClick={() => {
+                                            setIsCustomCategory(false);
+                                            setCategory(categories[0]);
+                                        }}
+                                    >
+                                        <X size={18} />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <select 
+                                    value={category} 
+                                    onChange={(e) => {
+                                        if (e.target.value === '___custom___') {
+                                            setIsCustomCategory(true);
+                                            setCategory('');
+                                        } else {
+                                            setCategory(e.target.value);
+                                        }
+                                    }}
+                                    className="w-full p-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white"
+                                >
+                                    {categories.map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                    <option value="___custom___" className="font-bold text-blue-600">+ New Category...</option>
+                                </select>
+                            )}
+                        </div>
                         </div>
                     </div>
 
