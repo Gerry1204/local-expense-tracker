@@ -746,7 +746,7 @@ export default function App() {
                         <p className="text-xs text-gray-400 mt-1">Supports math (e.g., 50+20)</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-semibold uppercase text-gray-500 mb-1">Date</label>
                             <input 
@@ -757,22 +757,21 @@ export default function App() {
                             />
                         </div>
                         <div>
-                        <div>
                             <label className="block text-xs font-semibold uppercase text-gray-500 mb-1">Category</label>
                             {isCustomCategory ? (
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 w-full">
                                     <input 
                                         type="text"
                                         value={category}
                                         onChange={(e) => setCategory(e.target.value)}
                                         placeholder="Enter category name..."
-                                        className="flex-1 p-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="flex-1 min-w-0 p-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                                         autoFocus
                                     />
                                     <Button 
                                         type="button"
                                         variant="secondary"
-                                        className="px-3"
+                                        className="px-3 shrink-0"
                                         title="Cancel custom category"
                                         onClick={() => {
                                             setIsCustomCategory(false);
@@ -801,7 +800,6 @@ export default function App() {
                                     <option value="___custom___" className="font-bold text-blue-600">+ New Category...</option>
                                 </select>
                             )}
-                        </div>
                         </div>
                     </div>
 
