@@ -584,19 +584,23 @@ export default function App() {
                                 data={categoryData}
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={isMobile ? 60 : 80}
-                                outerRadius={isMobile ? 70 : 100}
+                                innerRadius={isMobile ? 60 : 75}
+                                outerRadius={isMobile ? 80 : 100}
                                 paddingAngle={5}
                                 startAngle={90}
                                 endAngle={-270}
                                 dataKey="value"
                                 nameKey="name"
+                                style={{ outline: 'none' }}
                             >
                                 {categoryData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[categories.indexOf(entry.name) % COLORS.length] || '#CCCCCC'} />
                                 ))}
                             </Pie>
-                            <RechartsTooltip formatter={(value: number, name: string) => [value, tCategory(name)]} />
+                            <RechartsTooltip 
+                                formatter={(value: number, name: string) => [value, tCategory(name)]} 
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', outline: 'none' }}
+                            />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
@@ -627,7 +631,8 @@ export default function App() {
                         <XAxis dataKey="date" tick={{fontSize: 10}} tickFormatter={(val) => val.slice(5)} />
                         <YAxis tick={{fontSize: 10}} />
                         <RechartsTooltip 
-                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', outline: 'none' }}
+                            labelStyle={{ color: '#1f2937' }}
                         />
                         <Area 
                             type="monotone" 
