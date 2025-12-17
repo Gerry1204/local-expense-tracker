@@ -389,8 +389,8 @@ export default function App() {
       {yearlyStats && (
         <div className="space-y-4">
              <h3 className="font-semibold text-gray-700 dark:text-gray-200">Yearly Overview</h3>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <Card className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20 border-rose-200 dark:border-rose-800">
+             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 md:grid md:grid-cols-3 md:pb-0 no-scrollbar">
+                 <Card className="min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20 border-rose-200 dark:border-rose-800">
                      <div className="flex items-start justify-between">
                          <div>
                              <p className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">Highest Daily Spend</p>
@@ -411,7 +411,7 @@ export default function App() {
                      </div>
                  </Card>
 
-                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
+                  <Card className="min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
                       <div className="flex items-start justify-between">
                           <div>
                               <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Most Transactions Day</p>
@@ -432,7 +432,7 @@ export default function App() {
                       </div>
                   </Card>
 
-                 <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800">
+                 <Card className="min-w-[85%] sm:min-w-[60%] md:min-w-0 snap-center bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800">
                      <div className="flex items-start justify-between">
                          <div>
                              <p className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wide">Top Category</p>
