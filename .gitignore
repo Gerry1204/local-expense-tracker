@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 backend/expenses.db
 backend/test.db
-run_app.bat
+
 # Python
 __pycache__/
 *.pyc
@@ -34,4 +34,4 @@ env
 *.db
 database.py
 
-run_app.bat
+*.bat
