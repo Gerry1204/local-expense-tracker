@@ -114,6 +114,13 @@ export default function App() {
   const [deleteTxId, setDeleteTxId] = useState<number | null>(null);
   const timerRef = React.useRef<any>(null); // Use any to avoid NodeJS.Timeout type issues
   const ITEMS_PER_PAGE = 5;
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -194,7 +201,7 @@ export default function App() {
     filteredTransactions.filter(t => t.type === 'expense').forEach(t => {
       data[t.category] = (data[t.category] || 0) + t.amount;
     });
-    return Object.entries(data).map(([name, value]) => ({ name, value }));
+    return Object.entries(data).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [filteredTransactions]);
 
   const weeklyData = useMemo(() => {
@@ -551,27 +558,48 @@ export default function App() {
       <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:pb-0">
         <Card className="h-80 flex flex-col min-w-full lg:min-w-0 snap-center">
             <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-200">{t('expensesByCategory')}</h3>
-            <div className="flex-1 min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ bottom: 20 }}>
-                        <Pie
-                            data={categoryData}
-                            cx="50%"
-                            cy="45%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                            nameKey="name"
-                        >
-                            {categoryData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[categories.indexOf(entry.name) % COLORS.length] || '#CCCCCC'} />
-                            ))}
-                        </Pie>
-                        <RechartsTooltip formatter={(value: number, name: string) => [value, tCategory(name)]} />
-                        <Legend formatter={(value) => tCategory(value)} />
-                    </PieChart>
-                </ResponsiveContainer>
+            <div className="flex-1 min-h-0 flex items-center pr-4">
+                {/* Custom Legend - Left Side */}
+                <div className="md:w-2/5 min-w-[120px] flex flex-col justify-start gap-3 pl-2 overflow-y-auto max-h-full scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-600">
+                    {categoryData.map((entry, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                             <div 
+                                 className="w-3 h-3 md:w-4 md:h-4 rounded-sm shrink-0" 
+                                 style={{ backgroundColor: COLORS[categories.indexOf(entry.name) % COLORS.length] || '#CCCCCC' }}
+                             />
+                             <div className="flex flex-col min-w-0">
+                                <span className="text-xs md:text-sm text-gray-600 dark:text-gray-300 truncate font-medium">
+                                    {tCategory(entry.name)}
+                                </span>
+                             </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Pie Chart - Right Side */}
+                <div className="flex-1 h-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
+                            <Pie
+                                data={categoryData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={isMobile ? 60 : 80}
+                                outerRadius={isMobile ? 70 : 100}
+                                paddingAngle={5}
+                                startAngle={90}
+                                endAngle={-270}
+                                dataKey="value"
+                                nameKey="name"
+                            >
+                                {categoryData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[categories.indexOf(entry.name) % COLORS.length] || '#CCCCCC'} />
+                                ))}
+                            </Pie>
+                            <RechartsTooltip formatter={(value: number, name: string) => [value, tCategory(name)]} />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </Card>
         <Card className="h-80 flex flex-col min-w-full lg:min-w-0 snap-center">
