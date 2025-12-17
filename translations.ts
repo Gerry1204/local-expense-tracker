@@ -47,7 +47,19 @@ export const TRANSLATIONS = {
     cancel: 'Cancel',
     delete: 'Delete',
     deleteTitle: 'Delete Transaction?',
-    deleteMessage: 'Are you sure you want to remove this transaction? This action cannot be undone.'
+    deleteMessage: 'Are you sure you want to remove this transaction? This action cannot be undone.',
+    // Categories
+    cat_Food: 'Food',
+    cat_Transport: 'Transport',
+    cat_Entertainment: 'Entertainment',
+    cat_Salary: 'Salary',
+    cat_Bills: 'Bills',
+    cat_Housing: 'Housing',
+    cat_Education: 'Education',
+    cat_Shopping: 'Shopping',
+    cat_Health: 'Health',
+    cat_Other: 'Other',
+    cat_NewCategory: '+ New Category...'
   },
   zh: {
     dashboard: '儀表板',
@@ -96,7 +108,19 @@ export const TRANSLATIONS = {
     cancel: '取消',
     delete: '刪除',
     deleteTitle: '刪除交易？',
-    deleteMessage: '您確定要刪除這筆交易嗎？此操作無法復原。'
+    deleteMessage: '您確定要刪除這筆交易嗎？此操作無法復原。',
+    // Categories
+    cat_Food: '餐飲',
+    cat_Transport: '交通',
+    cat_Entertainment: '娛樂',
+    cat_Salary: '薪水',
+    cat_Bills: '帳單',
+    cat_Housing: '居住',
+    cat_Education: '教育',
+    cat_Shopping: '購物',
+    cat_Health: '醫療',
+    cat_Other: '其他',
+    cat_NewCategory: '+ 新增類別...'
   },
   ja: {
     dashboard: 'ダッシュボード',
@@ -141,7 +165,23 @@ export const TRANSLATIONS = {
     prev: '前へ',
     next: '次へ',
     page: 'ページ',
-    of: '/'
+    of: '/',
+    cancel: 'キャンセル',
+    delete: '削除',
+    deleteTitle: '取引を削除しますか？',
+    deleteMessage: 'この取引を削除してもよろしいですか？この操作は元に戻せません。',
+    // Categories
+    cat_Food: '食事',
+    cat_Transport: '交通',
+    cat_Entertainment: 'エンタメ',
+    cat_Salary: '給料',
+    cat_Bills: '請求書',
+    cat_Housing: '住居',
+    cat_Education: '教育',
+    cat_Shopping: '買い物',
+    cat_Health: '健康',
+    cat_Other: 'その他',
+    cat_NewCategory: '+ 新しいカテゴリ...'
   },
   ko: {
     dashboard: '대시보드',
@@ -181,12 +221,28 @@ export const TRANSLATIONS = {
     last6Months: '지난 6개월',
     lastYear: '지난 1년',
     allRecords: '모든 기록',
-    appName: 'Flowing Gold 流金',
+    appName: 'Flowing Gold 유금',
     allExpenses: '모든 지출',
     prev: '이전',
     next: '다음',
     page: '페이지',
-    of: '/'
+    of: '/',
+    cancel: '취소',
+    delete: '삭제',
+    deleteTitle: '거래 삭제?',
+    deleteMessage: '이 거래를 영구적으로 삭제하시겠습니까?',
+    // Categories
+    cat_Food: '식비',
+    cat_Transport: '교통',
+    cat_Entertainment: '오락',
+    cat_Salary: '급여',
+    cat_Bills: '공과금',
+    cat_Housing: '주거',
+    cat_Education: '교육',
+    cat_Shopping: '쇼핑',
+    cat_Health: '의료',
+    cat_Other: '기타',
+    cat_NewCategory: '+ 새 카테고리...'
   }
 };
 

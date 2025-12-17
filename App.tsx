@@ -70,8 +70,14 @@ const Card: React.FC<React.HTMLAttributes<HTMLDivElement> & { children: React.Re
 
 export default function App() {
   const [language, setLanguage] = useState('zh');
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const t = (key: keyof typeof TRANSLATIONS['en']) => {
     return TRANSLATIONS[language as Language][key] || TRANSLATIONS['en'][key];
+  };
+
+  const tCategory = (categoryName: string) => {
+    const key = `cat_${categoryName}` as keyof typeof TRANSLATIONS['en'];
+    return TRANSLATIONS[language as Language][key] || TRANSLATIONS['en'][key] || categoryName;
   };
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -495,7 +501,7 @@ export default function App() {
                              <div className="mt-2">
                                  {yearlyStats.highest_category ? (
                                      <>
-                                         <p className="text-lg font-bold text-gray-800 dark:text-gray-100">{yearlyStats.highest_category.category}</p>
+                                         <p className="text-lg font-bold text-gray-800 dark:text-gray-100">{tCategory(yearlyStats.highest_category.category)}</p>
                                          <p className="text-purple-600 dark:text-purple-400 font-semibold">${yearlyStats.highest_category.amount.toFixed(2)}</p>
                                      </>
                                  ) : (
@@ -527,13 +533,14 @@ export default function App() {
                             outerRadius={80}
                             paddingAngle={5}
                             dataKey="value"
+                            nameKey="name"
                         >
                             {categoryData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[categories.indexOf(entry.name) % COLORS.length] || '#CCCCCC'} />
                             ))}
                         </Pie>
-                        <RechartsTooltip />
-                        <Legend />
+                        <RechartsTooltip formatter={(value: number, name: string) => [value, tCategory(name)]} />
+                        <Legend formatter={(value) => tCategory(value)} />
                     </PieChart>
                 </ResponsiveContainer>
             </div>
@@ -547,7 +554,7 @@ export default function App() {
                     className="text-sm border-none bg-gray-100 dark:bg-slate-700 rounded-lg px-2 py-1 outline-none text-gray-700 dark:text-gray-200"
                 >
                     <option value="All">{t('allExpenses')}</option>
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    {categories.map(c => <option key={c} value={c}>{tCategory(c)}</option>)}
                 </select>
             </div>
             <div className="flex-1 min-h-0 bg-gradient-to-t from-white/0 to-white/0 rounded-xl overflow-hidden">
@@ -599,7 +606,7 @@ export default function App() {
                       <div className="flex gap-3 items-center pointer-events-none">
                           <div className={`w-2 h-10 rounded-full ${t.type === 'expense' ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>
                           <div>
-                              <p className="font-medium text-gray-800 dark:text-gray-100">{t.category}</p>
+                              <p className="font-medium text-gray-800 dark:text-gray-100">{tCategory(t.category)}</p>
                               <p className="text-xs text-gray-500">{t.note || t.date}</p>
                           </div>
                       </div>
@@ -671,7 +678,7 @@ export default function App() {
                                         borderColor: `${COLORS[categories.indexOf(t.category) % COLORS.length] || '#888'}40`
                                     }}
                                 >
-                                    {t.category}
+                                    {tCategory(t.category)}
                                 </span>
                             </td>
                             <td className="p-4 text-sm text-gray-500 dark:text-gray-400">{t.note}</td>
@@ -733,18 +740,43 @@ export default function App() {
 
         <div className="flex items-center gap-2">
             <div className="relative">
-                <Globe size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" />
-                <select 
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="pl-8 pr-2 py-1.5 rounded-full border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors w-10 sm:w-auto overflow-hidden whitespace-nowrap text-transparent sm:text-gray-700 sm:dark:text-gray-200"
-                    style={{ textOverflow: 'ellipsis' }}
+                <button 
+                    onClick={() => setShowLangMenu(!showLangMenu)}
+                    onBlur={() => setTimeout(() => setShowLangMenu(false), 200)}
+                    className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-gray-500 dark:text-gray-400"
                 >
-                    <option value="en" className="text-gray-800 dark:text-gray-200">English</option>
-                    <option value="zh" className="text-gray-800 dark:text-gray-200">中文</option>
-                    <option value="ja" className="text-gray-800 dark:text-gray-200">日本語</option>
-                    <option value="ko" className="text-gray-800 dark:text-gray-200">한국어</option>
-                </select>
+                    <Globe size={20} />
+                    <span className="hidden sm:block text-sm font-medium">
+                        {{ en: 'English', zh: '中文', ja: '日本語', ko: '한국어' }[language]}
+                    </span>
+                    <span className="hidden sm:block text-xs opacity-50">▼</span>
+                </button>
+                
+                {showLangMenu && (
+                    <div className="absolute right-0 top-full mt-2 w-32 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-gray-100 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
+                        {[
+                            { code: 'en', label: 'English' },
+                            { code: 'zh', label: '中文' },
+                            { code: 'ja', label: '日本語' },
+                            { code: 'ko', label: '한국어' }
+                        ].map((lang) => (
+                            <button
+                                key={lang.code}
+                                onClick={() => {
+                                    setLanguage(lang.code);
+                                    setShowLangMenu(false);
+                                }}
+                                className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                                    language === lang.code 
+                                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
+                                }`}
+                            >
+                                {lang.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
             
             <button 
@@ -870,9 +902,9 @@ export default function App() {
                                     className="w-full p-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white"
                                 >
                                     {categories.map(c => (
-                                        <option key={c} value={c}>{c}</option>
+                                        <option key={c} value={c}>{tCategory(c)}</option>
                                     ))}
-                                    <option value="___custom___" className="font-bold text-blue-600">+ New Category...</option>
+                                    <option value="___custom___" className="font-bold text-blue-600">{t('cat_NewCategory')}</option>
                                 </select>
                             )}
                         </div>
