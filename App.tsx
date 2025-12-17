@@ -583,7 +583,7 @@ export default function App() {
                     className="text-sm border-none bg-gray-100 dark:bg-slate-700 rounded-lg px-2 py-1 outline-none text-gray-700 dark:text-gray-200"
                 >
                     <option value="All">{t('allExpenses')}</option>
-                    {categories.map(c => <option key={c} value={c}>{tCategory(c)}</option>)}
+                    {categories.filter(c => c !== 'Salary').map(c => <option key={c} value={c}>{tCategory(c)}</option>)}
                 </select>
             </div>
             <div className="flex-1 min-h-0 bg-gradient-to-t from-white/0 to-white/0 rounded-xl overflow-hidden">
