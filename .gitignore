@@ -32,4 +32,4 @@ venv
 env
 *.db
 database.py
-*.bat
+run_app.bat
