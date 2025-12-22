@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-set "PROJECT_NAME=LocalFlow Expense Tracker"
+set "PROJECT_NAME=Smart Expense Tracker"
 
 :: ==============================
 :: 1. Get Network IPs
@@ -50,5 +50,11 @@ if not exist backend (
     exit
 )
 
+:: 背景執行：等待 5 秒後自動開啟瀏覽器，讓你有時間看 Server 啟動 Log
+echo.
+echo   [Browser] Will open automatically in 5 seconds...
+start /b cmd /c "timeout /t 5 /nobreak >nul && start http://localhost:3000"
+
 :: Using npx concurrently to run both services in one window
+:: 提示：如果有 Python 虛擬環境 (venv)，記得修改 backend 指令，例如: "cd backend && venv\Scripts\python -m uvicorn ..."
 call npx -y concurrently --kill-others -n "BACKEND,FRONTEND" -c "bgBlue.bold,bgGreen.bold" "cd backend && python -m uvicorn main:app --reload --host 0.0.0.0" "cd frontend && npm run dev -- --host"
