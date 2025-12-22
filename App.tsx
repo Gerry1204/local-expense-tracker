@@ -7,7 +7,7 @@ import {
   Plus, Trash2, ArrowUpCircle, ArrowDownCircle, 
   LayoutDashboard, List, Wallet, Calculator,
   ChevronLeft, ChevronRight, Moon, Sun, Download, Calendar, X,
-  TrendingUp, Activity, Tag, Globe
+  TrendingUp, Activity, Tag, Globe, User, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { Transaction, TransactionCreate, TransactionType, DashboardStats, YearlyStats } from './types';
 import { TRANSLATIONS, Language } from './translations';
@@ -116,6 +116,25 @@ export default function App() {
   const ITEMS_PER_PAGE = 5;
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  // Auth State
+  const [currentUser, setCurrentUser] = useState<string | null>(localStorage.getItem('currentUser'));
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [authUsername, setAuthUsername] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+
+  const authHeaders = useMemo(() => {
+    return currentUser ? { 'X-Username': currentUser } : {};
+  }, [currentUser]);
+
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
@@ -145,7 +164,9 @@ export default function App() {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/transactions/`);
+      const res = await fetch(`${API_URL}/transactions/`, {
+        headers: { ...authHeaders }
+      });
       if (!res.ok) throw new Error('Failed to connect to backend');
       const data = await res.json();
       setTransactions(data.sort((a: Transaction, b: Transaction) => b.date.localeCompare(a.date) || b.id - a.id));
@@ -159,7 +180,9 @@ export default function App() {
 
   const fetchYearlyStats = async (year: string) => {
       try {
-          const res = await fetch(`${API_URL}/stats/year/${year}`);
+          const res = await fetch(`${API_URL}/stats/year/${year}`, {
+            headers: { ...authHeaders }
+          });
           if (res.ok) {
               const data = await res.json();
               setYearlyStats(data);
@@ -173,7 +196,7 @@ export default function App() {
     fetchTransactions();
     // Default to current year or extracted year from startDate if applicable
     fetchYearlyStats(new Date().getFullYear().toString());
-  }, []);
+  }, [currentUser]); // Refetch when user changes
 
   // Update categories based on transactions
   useEffect(() => {
@@ -267,7 +290,10 @@ export default function App() {
     try {
       const res = await fetch(`${API_URL}/transactions/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...authHeaders
+        },
         body: JSON.stringify(newTx)
       });
       if (res.ok) {
@@ -289,7 +315,10 @@ export default function App() {
 
   const performDelete = async (id: number) => {
     try {
-      const res = await fetch(`${API_URL}/transactions/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/transactions/${id}`, { 
+        method: 'DELETE',
+        headers: { ...authHeaders }
+      });
       if (res.ok) await fetchTransactions();
     } catch (err) {
       setTransactions(transactions.filter(t => t.id !== id));
@@ -335,6 +364,47 @@ export default function App() {
           await performDelete(deleteTxId);
           setDeleteTxId(null);
       }
+  };
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const endpoint = isRegistering ? '/register' : '/login';
+    try {
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: authUsername, password: authPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (isRegistering) {
+            showToast(t('registerSuccess'), 'success');
+            setIsRegistering(false);
+        } else {
+            setCurrentUser(data.username);
+            localStorage.setItem('currentUser', data.username);
+            setShowAuthModal(false);
+            setAuthUsername('');
+            setAuthPassword('');
+            showToast(t('loginSuccess'), 'success');
+        }
+      } else {
+        // Map common backend errors to translated keys
+        let errorKey: any = 'authFailed';
+        if (data.detail === 'Username already exists') errorKey = 'usernameExists';
+        if (data.detail === 'Invalid username or password') errorKey = 'authFailed';
+        
+        showToast(t(errorKey), 'error');
+      }
+    } catch (err) {
+      showToast(t('connectError'), 'error');
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('currentUser');
+    setTransactions([]);
   };
 
   // --- Views ---
@@ -499,7 +569,7 @@ export default function App() {
                                          <p className="text-rose-600 dark:text-rose-400 font-semibold">${yearlyStats.highest_spending_day.amount.toFixed(2)}</p>
                                      </>
                                  ) : (
-                                     <p className="text-sm text-gray-500">{t('noData')}</p>
+                                     <p className="text-sm text-gray-500 italic">{t('noData')}</p>
                                  )}
                              </div>
                          </div>
@@ -520,7 +590,7 @@ export default function App() {
                                           <p className="text-blue-600 dark:text-blue-400 font-semibold">{yearlyStats.most_frequent_day.count} {t('items')}</p>
                                       </>
                                   ) : (
-                                       <p className="text-sm text-gray-500">{t('noData')}</p>
+                                       <p className="text-sm text-gray-500 italic">{t('noData')}</p>
                                   )}
                               </div>
                           </div>
@@ -541,7 +611,7 @@ export default function App() {
                                          <p className="text-purple-600 dark:text-purple-400 font-semibold">${yearlyStats.highest_category.amount.toFixed(2)}</p>
                                      </>
                                  ) : (
-                                     <p className="text-sm text-gray-500">{t('noData')}</p>
+                                     <p className="text-sm text-gray-500 italic">{t('noData')}</p>
                                  )}
                              </div>
                          </div>
@@ -558,7 +628,7 @@ export default function App() {
       <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:pb-0">
         <Card className="h-80 flex flex-col min-w-full lg:min-w-0 snap-center">
             <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-200">{t('expensesByCategory')}</h3>
-            <div className="flex-1 min-h-0 flex items-center pr-4">
+            <div className="flex-1 min-h-0 flex items-center pr-4 min-w-0">
                 {/* Custom Legend - Left Side */}
                 <div className="md:w-2/5 min-w-[120px] flex flex-col justify-start gap-3 pl-2 overflow-y-auto max-h-full scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-600">
                     {categoryData.map((entry, index) => (
@@ -577,32 +647,38 @@ export default function App() {
                 </div>
 
                 {/* Pie Chart - Right Side */}
-                <div className="flex-1 h-full relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
-                            <Pie
-                                data={categoryData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={isMobile ? 60 : 75}
-                                outerRadius={isMobile ? 80 : 100}
-                                paddingAngle={5}
-                                startAngle={90}
-                                endAngle={-270}
-                                dataKey="value"
-                                nameKey="name"
-                                style={{ outline: 'none' }}
-                            >
-                                {categoryData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[categories.indexOf(entry.name) % COLORS.length] || '#CCCCCC'} />
-                                ))}
-                            </Pie>
-                            <RechartsTooltip 
-                                formatter={(value: number, name: string) => [value, tCategory(name)]} 
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', outline: 'none' }}
-                            />
-                        </PieChart>
-                    </ResponsiveContainer>
+                <div className="flex-1 h-full relative" style={{ minWidth: 0, minHeight: '200px' }}>
+                    {categoryData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
+                                <Pie
+                                    data={categoryData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={isMobile ? 60 : 75}
+                                    outerRadius={isMobile ? 80 : 100}
+                                    paddingAngle={5}
+                                    startAngle={90}
+                                    endAngle={-270}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    style={{ outline: 'none' }}
+                                >
+                                    {categoryData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[categories.indexOf(entry.name) % COLORS.length] || '#CCCCCC'} />
+                                    ))}
+                                </Pie>
+                                <RechartsTooltip 
+                                    formatter={(value: number, name: string) => [value, tCategory(name)]} 
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', outline: 'none' }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-gray-400 text-sm italic">
+                            {t('noData')}
+                        </div>
+                    )}
                 </div>
             </div>
         </Card>
@@ -618,32 +694,38 @@ export default function App() {
                     {categories.filter(c => c !== 'Salary').map(c => <option key={c} value={c}>{tCategory(c)}</option>)}
                 </select>
             </div>
-            <div className="flex-1 min-h-0 bg-gradient-to-t from-white/0 to-white/0 rounded-xl overflow-hidden">
-                <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={weeklyData} margin={{ bottom: 10, left: -20, right: 10 }}>
-                        <defs>
-                            <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={EXPENSE_COLOR} stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor={EXPENSE_COLOR} stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                        <XAxis dataKey="date" tick={{fontSize: 10}} tickFormatter={(val) => val.slice(5)} />
-                        <YAxis tick={{fontSize: 10}} />
-                        <RechartsTooltip 
-                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', outline: 'none' }}
-                            labelStyle={{ color: '#1f2937' }}
-                        />
-                        <Area 
-                            type="monotone" 
-                            dataKey="amount" 
-                            stroke={EXPENSE_COLOR} 
-                            fillOpacity={1} 
-                            fill="url(#colorAmount)" 
-                            strokeWidth={3}
-                        />
-                    </AreaChart>
-                </ResponsiveContainer>
+            <div className="flex-1 min-h-0 bg-gradient-to-t from-white/0 to-white/0 rounded-xl overflow-hidden" style={{ minWidth: 0, minHeight: '200px' }}>
+                {weeklyData.some(d => d.amount > 0) ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={weeklyData} margin={{ bottom: 10, left: -20, right: 10 }}>
+                            <defs>
+                                <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={EXPENSE_COLOR} stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor={EXPENSE_COLOR} stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                            <XAxis dataKey="date" tick={{fontSize: 10}} tickFormatter={(val) => val.slice(5)} />
+                            <YAxis tick={{fontSize: 10}} />
+                            <RechartsTooltip 
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', outline: 'none' }}
+                                labelStyle={{ color: '#1f2937' }}
+                            />
+                            <Area 
+                                type="monotone" 
+                                dataKey="amount" 
+                                stroke={EXPENSE_COLOR} 
+                                fillOpacity={1} 
+                                fill="url(#colorAmount)" 
+                                strokeWidth={3}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400 text-sm italic">
+                        {t('noData')}
+                    </div>
+                )}
             </div>
         </Card>
       </div>
@@ -652,7 +734,8 @@ export default function App() {
       <div className="md:hidden">
           <h3 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 ml-1">{t('recentActivity')}</h3>
           <div className="space-y-3">
-              {filteredTransactions.slice((recentPage - 1) * ITEMS_PER_PAGE, recentPage * ITEMS_PER_PAGE).map(t => (
+              {filteredTransactions.length > 0 ? (
+                filteredTransactions.slice((recentPage - 1) * ITEMS_PER_PAGE, recentPage * ITEMS_PER_PAGE).map(t => (
                   <Card 
                     key={t.id} 
                     className="flex justify-between items-center py-3 active:scale-[0.98] transition-transform select-none"
@@ -676,7 +759,12 @@ export default function App() {
                           {t.type === 'expense' ? '-' : '+'}${t.amount}
                       </span>
                   </Card>
-              ))}
+                ))
+              ) : (
+                <Card className="py-8 text-center text-gray-400 text-sm italic">
+                    {t('noData')}
+                </Card>
+              )}
           </div>
           {/* Pagination Controls */}
           {filteredTransactions.length > ITEMS_PER_PAGE && (
@@ -759,7 +847,7 @@ export default function App() {
                     ))}
                     {filteredTransactions.length === 0 && (
                         <tr>
-                            <td colSpan={5} className="p-8 text-center text-gray-500 dark:text-gray-400">
+                            <td colSpan={5} className="p-8 text-center text-gray-500 dark:text-gray-400 italic">
                                 {t('noData')}
                             </td>
                         </tr>
@@ -850,6 +938,29 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2">
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-slate-800 rounded-full">
+                  <User size={16} className="text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {currentUser}
+                  </span>
+                </div>
+                <Button variant="ghost" className="px-3 !text-rose-600 hover:!text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20 !dark:text-rose-400" onClick={handleLogout}>
+                   {t('logout')}
+                </Button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => { setIsRegistering(false); setShowAuthModal(true); }}
+                className="p-2 sm:px-4 sm:py-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full sm:rounded-lg transition-colors flex items-center gap-2 group"
+                title={t('login')}
+              >
+                <User size={24} className="sm:size-[18px]" />
+                <span className="hidden sm:inline text-sm font-bold">{t('login')}</span>
+              </button>
+            )}
+
             <div className="relative">
                 <button 
                     onClick={() => setShowLangMenu(!showLangMenu)}
@@ -1055,6 +1166,102 @@ export default function App() {
                     </Button>
                 </div>
             </div>
+        </div>
+      )}
+
+      {/* Auth Modal (Login/Register) */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="relative p-8">
+              <button 
+                onClick={() => setShowAuthModal(false)}
+                className="absolute right-6 top-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                title={t('close')}
+              >
+                <X size={24} />
+              </button>
+              
+              <div className="mb-8 text-center">
+                <div className="inline-flex p-3 bg-blue-100 dark:bg-blue-900/30 rounded-2xl text-blue-600 dark:text-blue-400 mb-4">
+                  <Wallet size={32} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {isRegistering ? t('register') : t('login')}
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">
+                  {isRegistering ? 'Create your personal account' : 'Welcome back to Flowing Gold'}
+                </p>
+              </div>
+
+              <form onSubmit={handleAuth} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 px-1">
+                    {t('username')}
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    value={authUsername}
+                    onChange={(e) => setAuthUsername(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    placeholder="Enter username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 px-1">
+                    {t('password')}
+                  </label>
+                  <input 
+                    type="password"
+                    required
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className={`w-full py-3.5 text-lg font-bold shadow-lg mt-4 transition-all ${
+                    isRegistering 
+                    ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200 dark:shadow-none text-white' 
+                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 dark:shadow-none'
+                  }`}
+                >
+                  {isRegistering ? t('register') : t('login')}
+                </Button>
+              </form>
+
+              <div className="mt-8 text-center">
+                <button 
+                  onClick={() => setIsRegistering(!isRegistering)}
+                  className="text-sm font-medium transition-all"
+                >
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {isRegistering ? t('switchLoginPrefix') : t('switchRegisterPrefix')}
+                  </span>
+                  <span className={`${isRegistering ? 'text-blue-600 hover:text-blue-700' : 'text-rose-600 hover:text-rose-700'} hover:underline ml-1`}>
+                    {isRegistering ? t('switchLoginAction') : t('switchRegisterAction')}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[110] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className={`px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-3 border ${
+            toast.type === 'success' 
+            ? 'bg-emerald-500/90 text-white border-emerald-400' 
+            : 'bg-rose-500/90 text-white border-rose-400'
+          }`}>
+            {toast.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
+            <span className="font-bold tracking-tight">{toast.message}</span>
+          </div>
         </div>
       )}
 
