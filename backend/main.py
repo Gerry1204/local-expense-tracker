@@ -11,8 +11,8 @@ import models
 import database
 
 # Create tables in the global database (for users) explicitly on startup
-# We treats 'expenses' as the default/global db name
-database.get_user_engine("expenses")
+# We treats 'users' as the default/global db name
+database.get_user_engine("users")
 
 app = FastAPI()
 
@@ -58,8 +58,8 @@ def get_db(x_username: Optional[str] = Header(None)):
         raise HTTPException(status_code=400, detail="Invalid username header format")
 
     # Determine which database to use
-    # If no header, fallback to 'expenses' (public/default)
-    current_db_name = x_username if x_username else "expenses"
+    # If no header, fallback to 'users' (public/default)
+    current_db_name = x_username if x_username else "users"
     
     # Get engine (this also ensures tables exist)
     engine = database.get_user_engine(current_db_name)
@@ -74,8 +74,8 @@ def get_db(x_username: Optional[str] = Header(None)):
 
 # Dependency for global DB (users)
 def get_global_db():
-    # Always use 'expenses' db for user auth stuff
-    engine = database.get_user_engine("expenses")
+    # Always use 'users' db for user auth stuff
+    engine = database.get_user_engine("users")
     SessionLocal = database.sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
     try:
