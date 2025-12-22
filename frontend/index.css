@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --color-expense-light: #ff6b6b;
+  --color-expense-DEFAULT: #e11d48;
+  --color-expense-dark: #881337;
+
+  --color-income-light: #34d399;
+  --color-income-DEFAULT: #059669;
+  --color-income-dark: #064e3b;
+}
+
+/* Force dark mode to use class strategy instead of system preference */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Custom scrollbar for webkit to look nicer */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
