@@ -2,8 +2,7 @@
 
 **Flowing Gold** is a beautiful, modern, and privacy-focused personal expense tracker application. It empowers you to manage your finances locally with a stunning React frontend and a robust Python FastAPI backend, now featuring **secure multi-user authentication**.
 
-![Project Banner](https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1000)
-*(Replace with actual screenshot)*
+![Project Banner](./螢幕擷取畫面%202025-12-22%20101004.png)
 
 ## ✨ Key Features
 
